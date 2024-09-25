@@ -2,7 +2,6 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -29,13 +28,13 @@ struct LinkedList<T> {
     end: Option<NonNull<Node<T>>>,
 }
 
-impl<T> Default for LinkedList<T> {
+impl<T: std::cmp::PartialOrd> Default for LinkedList<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> LinkedList<T> {
+impl<T: std::cmp::PartialOrd> LinkedList<T> {
     pub fn new() -> Self {
         Self {
             length: 0,
@@ -72,11 +71,54 @@ impl<T> LinkedList<T> {
 	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
 	{
 		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+        //合并lista和listb,并排序
+        let mut merged_list = LinkedList::new();
+        //判断两个链表是否为空
+        if list_a.length == 0 {
+            return list_b;
         }
+        if list_b.length == 0 {
+            return list_a;
+        }
+
+        //合并两个链表
+        let mut current_a = list_a.start;
+        let mut current_b = list_b.start;
+        if unsafe { (*current_a.unwrap().as_ptr()).val < (*current_b.unwrap().as_ptr()).val } {
+             merged_list.start = current_a;
+             merged_list.end = current_a;
+             current_a = unsafe { (*current_a.unwrap().as_ptr()).next };
+         } else {
+             merged_list.start = current_b;
+             merged_list.end = current_b;
+             current_b = unsafe { (*current_b.unwrap().as_ptr()).next };
+         }
+         merged_list.length = list_a.length + list_b.length;
+        while current_a.is_some() && current_b.is_some() {
+            if unsafe { (*current_a.unwrap().as_ptr()).val < (*current_b.unwrap().as_ptr()).val } {
+               let node_ptr = current_a;
+               let end_ptr = merged_list.end.unwrap();
+                unsafe { (*end_ptr.as_ptr()).next = node_ptr };
+                merged_list.end = node_ptr;
+                current_a = unsafe {(*current_a.unwrap().as_ptr()).next };
+            } else {
+                let node_ptr = current_b;
+                let end_ptr = merged_list.end.unwrap();
+                unsafe { (*end_ptr.as_ptr()).next = node_ptr };
+                merged_list.end = node_ptr;
+                current_b = unsafe { (*current_b.unwrap().as_ptr()).next };
+            }
+        }
+
+        if current_a.is_some() {
+            unsafe {merged_list.end.unwrap().as_mut().next = current_a}
+            merged_list.end = list_a.end;
+        }else{
+            unsafe{merged_list.end.unwrap().as_mut().next = current_b}
+            merged_list.end = list_b.end;
+        }
+        merged_list
+
 	}
 }
 
